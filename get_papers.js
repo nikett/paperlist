@@ -12,12 +12,16 @@ async function populate_papers(scholar_id_str, format) {
     const papersText = await response.text();
     const papersjson = JSON.parse(papersText);
     jsonPaperList = paperListToJSON(papersjson);
-    populateHeader(papersjson);
     if (format == "list") {
+      populateHeader(jsonPaperList);
       populateList(jsonPaperList);
     }
     else if (format == "table") {
+      populateHeader(jsonPaperList);
       populateTable(jsonPaperList);
+    }
+    else if (format == "json") {
+      return jsonPaperList;
     }
   }
 
@@ -54,6 +58,13 @@ async function populate_papers(scholar_id_str, format) {
     const papers = obj.papers;
     const highlighted_author = obj.name;
 
+    var data = {};
+
+    data["author_meta"] = {};
+    data["author_meta"]["paper_count"] = obj.paperCount;
+    data["author_meta"]["citation_count"] = obj.citationCount;
+    data["author_meta"]["h_index"] = obj.hIndex;
+
     var paperList = [];
 
     for (const p of papers) {
@@ -76,14 +87,18 @@ async function populate_papers(scholar_id_str, format) {
 
       paperList.push(paperData);
     }
-    return paperList;
+
+    data["json_paper_list"] = paperList
+    return data;
   }
 
-  function populateTable(papers) {
+  function populateTable(author_data) {
     const section = document.querySelector('papers_list');
   
     const tbl = document.createElement('table');
     var t = "" ; // table content.
+
+    papers = author_data["json_paper_list"]
     
     pnum = 1;
     for (const p of papers) {
@@ -104,11 +119,13 @@ async function populate_papers(scholar_id_str, format) {
     section.appendChild(tbl);
   }
 
-  function populateList(papers) {
+  function populateList(author_data) {
     const section = document.querySelector('papers_list');
   
     const ul = document.createElement('ul');
-    var t = "" ; // table content.
+    var t = "" ; // list content.
+
+    papers = author_data["json_paper_list"]
     
     pnum = 1;
     for (const p of papers) {
@@ -131,10 +148,12 @@ async function populate_papers(scholar_id_str, format) {
   }
 
 
-  function populateHeader(obj) {
+  function populateHeader(author_data) {
     const header = document.querySelector('papers_header');
     const myH1 = document.createElement('h3');
-    myH1.textContent = `${obj.paperCount} papers | ${obj.citationCount} citations | h-index: ${obj.hIndex}`;
+    author_meta = author_data["author_meta"]
+    myH1.textContent = author_meta["paper_count"] + " papers | " + author_meta["citation_count"] + " citations | h-index: " + author_meta["h_index"]
+    // myH1.textContent = `${obj.paperCount} papers | ${obj.citationCount} citations | h-index: ${obj.hIndex}`;
     header.appendChild(myH1);
   
   }
