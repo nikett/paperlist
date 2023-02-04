@@ -1,8 +1,39 @@
 
+async function populate_lab_papers(scholar_ids, format) {
+
+    const url = 'https://api.semanticscholar.org/graph/v1/author/batch';
+    const papers_fields = ['title', 'year', 'paperId', 'venue', 'citationStyles', 'citationCount', 'authors', 'externalIds', 'url', 'publicationVenue', 'isOpenAccess', 'openAccessPdf'];
+    const author_fields = ['name', 'citationCount', 'hIndex', 'paperCount'];
+    const sep = 'papers.';
+    const requestParam = "?fields=" + sep + papers_fields.join( "," + sep) + "," + author_fields.join(",");
+    var requestURL = url + requestParam;
+    const request = new Request(requestURL, {
+        method: 'POST',
+        headers: {
+           'Accept': 'application/json',
+           'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({"ids":scholar_ids})
+    });
+    const response = await fetch(request);
+    const papersText = await response.text();
+    const papersjson = JSON.parse(papersText);
+    const allPaperData = parseBatchPapers(papersjson);
+    if (format == "list") {
+      populateList(allPaperData);
+    }
+    else if (format == "table") {
+      populateTable(allPaperData);
+    }
+    else if (format == "json") {
+      return allPaperData;
+    }
+}
+
 async function populate_papers(scholar_id_str, format) {
 
     const url = 'https://api.semanticscholar.org/graph/v1/author/';
-    const papers_fields = ['title', 'year', 'venue', 'citationStyles', 'citationCount', 'authors', 'externalIds', 'url', 'publicationVenue', 'isOpenAccess', 'openAccessPdf'];
+    const papers_fields = ['title', 'year', 'paperId', 'venue', 'citationStyles', 'citationCount', 'authors', 'externalIds', 'url', 'publicationVenue', 'isOpenAccess', 'openAccessPdf'];
     const author_fields = ['name', 'citationCount', 'hIndex', 'paperCount'];
     const sep = 'papers.';
     const requestParam = "?fields=" + sep + papers_fields.join( "," + sep) + "," + author_fields.join(","); 
@@ -13,63 +44,67 @@ async function populate_papers(scholar_id_str, format) {
     const papersjson = JSON.parse(papersText);
     jsonPaperList = paperListToJSON(papersjson);
     if (format == "list") {
-      populateHeader(jsonPaperList);
       populateList(jsonPaperList);
     }
     else if (format == "table") {
-      populateHeader(jsonPaperList);
       populateTable(jsonPaperList);
     }
     else if (format == "json") {
       return jsonPaperList;
     }
-  }
+}
 
-  function get_shortest_str(arr) {
+function get_shortest_str(arr) {
     if (arr == null || arr.length ==0)
       return "";
     
     return arr.reduce(function(a, b) { 
         return a.length <= b.length ? a : b
     });
-  }
+}
 
-  function abbreviated_venue(v, v_detailed) {
+function abbreviated_venue(v, v_detailed) {
     if(v_detailed == null)
-      return "Preprint";
+        return "Preprint";
     return get_shortest_str(v_detailed.alternate_names) || v ;
-  }
+}
   
-  function author_list(authors, highlighted_author) {
+function author_list(authors, highlighted_author) {
     return authors.map(x => x.name == highlighted_author? "<b>" + x.name + "</b>": x.name).join(', ');
-  }
+}
 
-  function raw_author_list(authors) {
+function raw_author_list(authors) {
     return authors.map(x => x.name).join(', ');
-  }
+}
 
-  function copyBib(bib, bib_id){
+function copyBib(bib, bib_id){
     console.log(`Copying ${bib} to ${bib_id}`);
     navigator.clipboard.writeText(bib);
     document.getElementById(bib_id).textContent = "copied!";
-  }
+}
 
-  function paperListToJSON(obj) {
-    const papers = obj.papers;
-    const highlighted_author = obj.name;
-
+function parseAuthorMetadata(obj) {
     var data = {};
 
-    data["author_meta"] = {};
-    data["author_meta"]["paper_count"] = obj.paperCount;
-    data["author_meta"]["citation_count"] = obj.citationCount;
-    data["author_meta"]["h_index"] = obj.hIndex;
+    data["author_name"] = obj.name;
+    data["author_id"] = obj.authorId;
+    data["paper_count"] = obj.paperCount;
+    data["citation_count"] = obj.citationCount;
+    data["h_index"] = obj.hIndex;
+
+    return data;
+}
+
+function parsePaperList(obj) {
+    const papers = obj.papers;
+    const highlighted_author = obj.name;
 
     var paperList = [];
 
     for (const p of papers) {
       var paperData = {};
       paperData["paper_title"] = p.title;
+      paperData["paper_id"] = p.paperId;
       paperData["author_list"] = raw_author_list(p.authors);
       paperData["highlighted_author_list"] = author_list(p.authors, highlighted_author);
       paperData["num_citations"] = p.citationCount;
@@ -87,12 +122,36 @@ async function populate_papers(scholar_id_str, format) {
 
       paperList.push(paperData);
     }
+    return paperList;
+}
 
-    data["json_paper_list"] = paperList
+function paperListToJSON(obj) {
+
+    var data = {};
+    data["author_meta"] = parseAuthorMetadata(obj);
+    data["json_paper_list"] = parsePaperList(obj);
+
     return data;
-  }
+}
 
-  function populateTable(author_data) {
+function parseBatchPapers(obj) {
+    var labAuthorsMeta = [];
+    var labPapers = [];
+    for (const authorData of obj) {
+        authorMeta = parseAuthorMetadata(authorData);
+        labAuthorsMeta.push(authorMeta);
+
+        authorPapers = parsePaperList(authorData);
+        labPapers.push.apply(labPapers, authorPapers);
+    }
+    var data = {};
+    data["authors"] = labAuthorsMeta;
+    data["json_paper_list"] = labPapers;
+
+    return data;
+}
+
+function populateTable(author_data) {
     const section = document.querySelector('papers_list');
   
     const tbl = document.createElement('table');
@@ -117,9 +176,9 @@ async function populate_papers(scholar_id_str, format) {
 
     tbl.innerHTML = t;
     section.appendChild(tbl);
-  }
+}
 
-  function populateList(author_data) {
+function populateList(author_data) {
     const section = document.querySelector('papers_list');
   
     const ul = document.createElement('ul');
@@ -145,15 +204,4 @@ async function populate_papers(scholar_id_str, format) {
     }
 
     section.appendChild(ul);
-  }
-
-
-  function populateHeader(author_data) {
-    const header = document.querySelector('papers_header');
-    const myH1 = document.createElement('h3');
-    author_meta = author_data["author_meta"]
-    myH1.textContent = author_meta["paper_count"] + " papers | " + author_meta["citation_count"] + " citations | h-index: " + author_meta["h_index"]
-    // myH1.textContent = `${obj.paperCount} papers | ${obj.citationCount} citations | h-index: ${obj.hIndex}`;
-    header.appendChild(myH1);
-  
-  }
+}
