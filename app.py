@@ -73,9 +73,13 @@ if __name__ == '__main__':
 
         submit = st.form_submit_button("Submit")
         if submit:
-            info = {'paper_id': paper_id, 'author_id': author_id,
-                    'error_type': error_type, 'error_desc': error_desc,
-                    'paper_title': paper_title, 'time_stamp': time_stamp}
+            info = {'paper_id': [paper_id],
+                    'author_id': [author_id],
+                    'error_type': [error_type],
+                    'error_desc': [error_desc],
+                    'paper_title': [paper_title],
+                    'time_stamp': [time_stamp]
+                    }
             report_df = pd.DataFrame(info)
 
             db = st.session_state["db"]
