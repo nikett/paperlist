@@ -83,6 +83,13 @@ function copyBib(bib, bib_id){
     document.getElementById(bib_id).textContent = "copied!";
 }
 
+function reportError(paper_id) {
+    alert("You will be redirected to an error reporting form. Please note the paper id for the next page: " + paper_id);
+    // dummy redirect url - change to reporting page
+    redirect_url = 'https://www.google.com/';
+    location.href = redirect_url;
+}
+
 function parseAuthorMetadata(obj) {
     var data = {};
 
@@ -169,6 +176,8 @@ function populateTable(author_data) {
       bib = p["bib"];
       bib_id  = `bibtocopy${pnum}`;
       t += '<button id="' + bib_id + '" onclick="copyBib(`' + bib +'`, `' + bib_id + '`)">Copy bib</button>';
+      paper_id = p["paper_id"];
+      t += '<button id="' + paper_id + '" onclick="reportError(`' + paper_id + '`)">Report</button>';
       t += " <br><br></td>";
       t += "</tr>";
       pnum += 1;
@@ -197,6 +206,8 @@ function populateList(author_data) {
       bib = p["bib"];
       bib_id  = `bibtocopy${pnum}`;
       li += '<button id="' + bib_id + '" onclick="copyBib(`' + bib +'`, `' + bib_id + '`)">Copy bib</button>';
+      paper_id = p["paper_id"];
+      li += '<button id="' + paper_id + '" onclick="reportError(`' + paper_id + '`)">Report</button>';
       li += " <br><br>";
       item.innerHTML = li;
       pnum += 1;
