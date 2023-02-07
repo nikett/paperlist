@@ -38,10 +38,12 @@ def setup_sheet_db():
     spreadsheetname = "Reporting"
     # ns = client.create(spreadsheetname)
     spread = Spread(spreadsheetname, client = client)
-    spread.create_sheet(spreadsheetname)
+
+    # spread.create_sheet(spreadsheetname)
     # spread.share('nikett@allenai.org', perm_type='user', role='writer')
     # Check the connection
     # st.write(spread.url)
+
     sh = client.open(spreadsheetname)
     worksheet_list = sh.worksheets()
     sheet = sh.worksheet('Reports')
