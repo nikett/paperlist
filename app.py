@@ -25,7 +25,7 @@ def extract_all_get_params():
 
 def update_data(sheetname, df, spread) -> str:
     col = ['paper_id', 'author_id', 'error_type', 'error_desc', 'paper_title', 'time_stamp']
-    spread.df_to_sheet(df[col], sheet=sheetname, index=False)
+    spread.df_to_sheet(df, sheet=sheetname, index=False, freeze_headers=True)
     return 'Error reported'
 
 def setup_sheet_db():
@@ -78,7 +78,7 @@ if __name__ == '__main__':
                     'error_type': [error_type],
                     'error_desc': [error_desc],
                     'paper_title': [paper_title],
-                    'time_stamp': [time_stamp]
+                    'time_stamp': [str(time_stamp)]
                     }
             report_df = pd.DataFrame(info)
 
