@@ -23,7 +23,7 @@ def extract_all_get_params():
     paper_title = get_param_value(param_name="paper_title", app_state=app_state)
     return {"paper_id": paper_id, "author_id": author_id, "paper_title": paper_title}
 
-def update_data(sheetname, df, spread) -> str:
+def update_data(sheetname, df, spread):
     col = ['paper_id', 'author_id', 'error_type', 'error_desc', 'paper_title', 'time_stamp']
     spread.df_to_sheet(df, sheet=sheetname, index=False, freeze_headers=True)
     return 'Error reported'
@@ -84,7 +84,7 @@ if __name__ == '__main__':
 
             db = st.session_state["db"]
             df = pd.DataFrame(db["sheet"].get_all_records())
-            updated_df = df.append(report_df, ignore_index=True)
-            update_data(sheetname='Reports', df=df, spread=db["spread"])
+            updated_df = pd.concat([df, report_df], ignore_index=True)
+            update_data(sheetname='Reports', df=updated_df, spread=db["spread"])
 
 
