@@ -83,10 +83,10 @@ function copyBib(bib, bib_id){
     document.getElementById(bib_id).textContent = "copied!";
 }
 
-function reportError(paper_id) {
-    alert("You will be redirected to an error reporting form. Please note the paper id for the next page: " + paper_id);
-    // dummy redirect url - change to reporting page
-    redirect_url = 'https://www.google.com/';
+function reportError(paper_id, author_id, paper_title) {
+    alert("You will be redirected to an error reporting form.");
+    base_url = 'https://nikett-paperlist-app-dazi7u.streamlit.app/'
+    redirect_url = base_url + '?paper_id='+paper_id+'&author_id='+author_id+'&paper_title='+paper_title;
     location.href = redirect_url;
 }
 
@@ -164,10 +164,12 @@ function populateTable(author_data) {
     const tbl = document.createElement('table');
     var t = "" ; // table content.
 
+    author = author_data["author_meta"]["author_id"]
     papers = author_data["json_paper_list"]
     
     pnum = 1;
     for (const p of papers) {
+      paper_title = p["paper_title"]
       t += "<tr>";
       t += "<td> "+p["paper_title"]+"<br>";
       t += p["highlighted_author_list"]+"<br>"
@@ -177,7 +179,7 @@ function populateTable(author_data) {
       bib_id  = `bibtocopy${pnum}`;
       t += '<button id="' + bib_id + '" onclick="copyBib(`' + bib +'`, `' + bib_id + '`)">Copy bib</button>';
       paper_id = p["paper_id"];
-      t += '<button id="' + paper_id + '" onclick="reportError(`' + paper_id + '`)">Report</button>';
+      t += '<button id="' + paper_id + '" onclick="reportError(`' + paper_id +'`, `' + author_id + '`, `' + paper_title + '`)">Report</button>';
       t += " <br><br></td>";
       t += "</tr>";
       pnum += 1;
@@ -193,10 +195,12 @@ function populateList(author_data) {
     const ul = document.createElement('ul');
     var t = "" ; // list content.
 
+    author_id = author_data["author_meta"]["author_id"]
     papers = author_data["json_paper_list"]
     
     pnum = 1;
     for (const p of papers) {
+      paper_title = p["paper_title"]
       let item = document.createElement("li");
       li = ""
       li += p["paper_title"]+"<br>"
@@ -207,7 +211,7 @@ function populateList(author_data) {
       bib_id  = `bibtocopy${pnum}`;
       li += '<button id="' + bib_id + '" onclick="copyBib(`' + bib +'`, `' + bib_id + '`)">Copy bib</button>';
       paper_id = p["paper_id"];
-      li += '<button id="' + paper_id + '" onclick="reportError(`' + paper_id + '`)">Report</button>';
+      li += '<button id="' + paper_id + '" onclick="reportError(`' + paper_id +'`, `' + author_id + '`, `' + paper_title + '`)">Report</button>';
       li += " <br><br>";
       item.innerHTML = li;
       pnum += 1;
