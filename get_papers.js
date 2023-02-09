@@ -179,7 +179,7 @@ function populateTable(author_data, report_mode) {
       t += ` <a href="${p["pdf_url"]}">[PDF]</a>`;
       bib = p["bib"];
       bib_id  = `bibtocopy${pnum}`;
-      t += '<button id="' + bib_id + '" onclick="copyBib(`' + bib +'`, `' + bib_id + '`)">Copy bib</button>';
+      t += '<button id="' + bib_id + '" onclick="copyBib(`' + bib +'`, `' + bib_id + '`)">Copy bib</button>'
       if (report_mode == true) {
       	paper_id = p["paper_id"];
       	t += '<button id="' + paper_id + '" onclick="reportError(`' + paper_id +'`, `' + author_id + '`, `' + paper_title + '`)">Report</button>';
