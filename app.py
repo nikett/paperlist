@@ -82,8 +82,8 @@ if __name__ == '__main__':
             df = pd.DataFrame(db["sheet"].get_all_records())
             updated_df = pd.concat([df, report_df], ignore_index=True)
             if error_desc == "Paper is not mine":
-                update_data(sheetname='Reports', df=updated_df, spread=db["spread"], problem_paper_id)
+                problem_paper_id = paper_id
             else:
-                update_data(sheetname='Reports', df=updated_df, spread=db["spread"])
-
+                problem_paper_id=None
+            update_data(sheetname='Reports', df=updated_df, spread=db["spread"], paper_id=problem_paper_id)
 
