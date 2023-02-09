@@ -1,5 +1,5 @@
 
-async function populate_lab_papers(scholar_ids, format) {
+async function populate_lab_papers(scholar_ids, format, exclude_paper_ids=[], report_mode=false) {
 
     const url = 'https://api.semanticscholar.org/graph/v1/author/batch';
     const papers_fields = ['title', 'year', 'paperId', 'venue', 'citationStyles', 'citationCount', 'authors', 'externalIds', 'url', 'publicationVenue', 'isOpenAccess', 'openAccessPdf'];
@@ -18,19 +18,19 @@ async function populate_lab_papers(scholar_ids, format) {
     const response = await fetch(request);
     const papersText = await response.text();
     const papersjson = JSON.parse(papersText);
-    const allPaperData = parseBatchPapers(papersjson);
+    const allPaperData = parseBatchPapers(papersjson, exclude_paper_ids);
     if (format == "list") {
-      populateList(allPaperData);
+      populateList(allPaperData, report_mode);
     }
     else if (format == "table") {
-      populateTable(allPaperData);
+      populateTable(allPaperData, report_mode);
     }
     else if (format == "json") {
       return allPaperData;
     }
 }
 
-async function populate_papers(scholar_id_str, format) {
+async function populate_papers(scholar_id_str, format, exclude_paper_ids=[], report_mode=false) {
 
     const url = 'https://api.semanticscholar.org/graph/v1/author/';
     const papers_fields = ['title', 'year', 'paperId', 'venue', 'citationStyles', 'citationCount', 'authors', 'externalIds', 'url', 'publicationVenue', 'isOpenAccess', 'openAccessPdf'];
@@ -42,12 +42,12 @@ async function populate_papers(scholar_id_str, format) {
     const response = await fetch(request);
     const papersText = await response.text();
     const papersjson = JSON.parse(papersText);
-    jsonPaperList = paperListToJSON(papersjson);
+    jsonPaperList = paperListToJSON(papersjson, exclude_paper_ids);
     if (format == "list") {
-      populateList(jsonPaperList);
+      populateList(jsonPaperList, report_mode);
     }
     else if (format == "table") {
-      populateTable(jsonPaperList);
+      populateTable(jsonPaperList, report_mode);
     }
     else if (format == "json") {
       return jsonPaperList;
@@ -83,10 +83,10 @@ function copyBib(bib, bib_id){
     document.getElementById(bib_id).textContent = "copied!";
 }
 
-function reportError(paper_id) {
-    alert("You will be redirected to an error reporting form. Please note the paper id for the next page: " + paper_id);
-    // dummy redirect url - change to reporting page
-    redirect_url = 'https://www.google.com/';
+function reportError(paper_id, author_id, paper_title) {
+    alert("You will be redirected to an error reporting form.");
+    base_url = 'https://nikett-paperlist-app-dazi7u.streamlit.app/'
+    redirect_url = base_url + '?paper_id='+paper_id+'&author_id='+author_id+'&paper_title='+paper_title;
     location.href = redirect_url;
 }
 
@@ -102,7 +102,7 @@ function parseAuthorMetadata(obj) {
     return data;
 }
 
-function parsePaperList(obj) {
+function parsePaperList(obj, exclude_paper_ids) {
     const papers = obj.papers;
     const highlighted_author = obj.name;
 
@@ -110,45 +110,47 @@ function parsePaperList(obj) {
 
     for (const p of papers) {
       var paperData = {};
-      paperData["paper_title"] = p.title;
-      paperData["paper_id"] = p.paperId;
-      paperData["author_list"] = raw_author_list(p.authors);
-      paperData["highlighted_author_list"] = author_list(p.authors, highlighted_author);
-      paperData["num_citations"] = p.citationCount;
-      paperData["venue"] = p.venue;
-      paperData["publicationVenue"] = p.publicationVenue;
-      paperData["abbreviated_venue"] = abbreviated_venue(p.venue, p.publicationVenue);
-      paperData["year"] = p.year;
-      paperData["bib"] = p.citationStyles.bibtex.replace("@None", "@article");
-      if (p.isOpenAccess) {
-        paperData["pdf_url"] = p.openAccessPdf.url;
-      }
-      else {
-        paperData["pdf_url"] = p.url;
-      }
+      if (exclude_paper_ids.includes(p.paperId) == false) {
+          paperData["paper_title"] = p.title;
+          paperData["paper_id"] = p.paperId;
+          paperData["author_list"] = raw_author_list(p.authors);
+          paperData["highlighted_author_list"] = author_list(p.authors, highlighted_author);
+          paperData["num_citations"] = p.citationCount;
+          paperData["venue"] = p.venue;
+          paperData["publicationVenue"] = p.publicationVenue;
+          paperData["abbreviated_venue"] = abbreviated_venue(p.venue, p.publicationVenue);
+          paperData["year"] = p.year;
+          paperData["bib"] = p.citationStyles.bibtex.replace("@None", "@article");
+          if (p.isOpenAccess) {
+            paperData["pdf_url"] = p.openAccessPdf.url;
+          }
+          else {
+            paperData["pdf_url"] = p.url;
+          }
 
-      paperList.push(paperData);
+          paperList.push(paperData);
+        }
     }
     return paperList;
 }
 
-function paperListToJSON(obj) {
+function paperListToJSON(obj, exclude_paper_ids) {
 
     var data = {};
     data["author_meta"] = parseAuthorMetadata(obj);
-    data["json_paper_list"] = parsePaperList(obj);
+    data["json_paper_list"] = parsePaperList(obj, exclude_paper_ids);
 
     return data;
 }
 
-function parseBatchPapers(obj) {
+function parseBatchPapers(obj, exclude_paper_ids) {
     var labAuthorsMeta = [];
     var labPapers = [];
     for (const authorData of obj) {
         authorMeta = parseAuthorMetadata(authorData);
         labAuthorsMeta.push(authorMeta);
 
-        authorPapers = parsePaperList(authorData);
+        authorPapers = parsePaperList(authorData, exclude_paper_ids);
         labPapers.push.apply(labPapers, authorPapers);
     }
     var data = {};
@@ -158,16 +160,18 @@ function parseBatchPapers(obj) {
     return data;
 }
 
-function populateTable(author_data) {
+function populateTable(author_data, report_mode) {
     const section = document.querySelector('papers_list');
   
     const tbl = document.createElement('table');
     var t = "" ; // table content.
 
+    author = author_data["author_meta"]["author_id"]
     papers = author_data["json_paper_list"]
     
     pnum = 1;
     for (const p of papers) {
+      paper_title = p["paper_title"]
       t += "<tr>";
       t += "<td> "+p["paper_title"]+"<br>";
       t += p["highlighted_author_list"]+"<br>"
@@ -176,8 +180,10 @@ function populateTable(author_data) {
       bib = p["bib"];
       bib_id  = `bibtocopy${pnum}`;
       t += '<button id="' + bib_id + '" onclick="copyBib(`' + bib +'`, `' + bib_id + '`)">Copy bib</button>';
-      paper_id = p["paper_id"];
-      t += '<button id="' + paper_id + '" onclick="reportError(`' + paper_id + '`)">Report</button>';
+      if (report_mode == true) {
+      	paper_id = p["paper_id"];
+      	t += '<button id="' + paper_id + '" onclick="reportError(`' + paper_id +'`, `' + author_id + '`, `' + paper_title + '`)">Report</button>';
+      }
       t += " <br><br></td>";
       t += "</tr>";
       pnum += 1;
@@ -187,16 +193,18 @@ function populateTable(author_data) {
     section.appendChild(tbl);
 }
 
-function populateList(author_data) {
+function populateList(author_data, report_mode) {
     const section = document.querySelector('papers_list');
   
     const ul = document.createElement('ul');
     var t = "" ; // list content.
 
+    author_id = author_data["author_meta"]["author_id"]
     papers = author_data["json_paper_list"]
     
     pnum = 1;
     for (const p of papers) {
+      paper_title = p["paper_title"]
       let item = document.createElement("li");
       li = ""
       li += p["paper_title"]+"<br>"
@@ -206,8 +214,10 @@ function populateList(author_data) {
       bib = p["bib"];
       bib_id  = `bibtocopy${pnum}`;
       li += '<button id="' + bib_id + '" onclick="copyBib(`' + bib +'`, `' + bib_id + '`)">Copy bib</button>';
-      paper_id = p["paper_id"];
-      li += '<button id="' + paper_id + '" onclick="reportError(`' + paper_id + '`)">Report</button>';
+      if (report_mode == true) {
+        paper_id = p["paper_id"];
+        li += '<button id="' + paper_id + '" onclick="reportError(`' + paper_id +'`, `' + author_id + '`, `' + paper_title + '`)">Report</button>';
+      }
       li += " <br><br>";
       item.innerHTML = li;
       pnum += 1;
