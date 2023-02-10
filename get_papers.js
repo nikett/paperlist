@@ -1,5 +1,5 @@
 
-async function populate_lab_papers(scholar_ids, format, exclude_paper_ids=[], report_mode=false) {
+async function populate_lab_papers(scholar_ids, format="list", exclude_paper_ids=[], report_mode=false) {
 
     const url = 'https://api.semanticscholar.org/graph/v1/author/batch';
     const papers_fields = ['title', 'year', 'paperId', 'venue', 'citationStyles', 'citationCount', 'authors', 'externalIds', 'url', 'publicationVenue', 'isOpenAccess', 'openAccessPdf'];
@@ -30,7 +30,7 @@ async function populate_lab_papers(scholar_ids, format, exclude_paper_ids=[], re
     }
 }
 
-async function populate_papers(scholar_id_str, format, exclude_paper_ids=[], report_mode=false) {
+async function populate_papers(scholar_id_str, format="list", exclude_paper_ids=[], report_mode=false) {
 
     const url = 'https://api.semanticscholar.org/graph/v1/author/';
     const papers_fields = ['title', 'year', 'paperId', 'venue', 'citationStyles', 'citationCount', 'authors', 'externalIds', 'url', 'publicationVenue', 'isOpenAccess', 'openAccessPdf'];
@@ -80,7 +80,7 @@ function raw_author_list(authors) {
 function copyBib(bib, bib_id){
     console.log(`Copying ${bib} to ${bib_id}`);
     navigator.clipboard.writeText(bib);
-    document.getElementById(bib_id).textContent = "copied!";
+    document.getElementById(bib_id).textContent = "Copied!";
 }
 
 function reportError(paper_id, author_id, paper_title) {
@@ -173,16 +173,17 @@ function populateTable(author_data, report_mode) {
     for (const p of papers) {
       paper_title = p["paper_title"]
       t += "<tr>";
-      t += "<td> "+p["paper_title"]+"<br>";
-      t += p["highlighted_author_list"]+"<br>"
-      t += p["abbreviated_venue"]+", "+p["year"];
-      t += ` <a href="${p["pdf_url"]}">[PDF]</a>`;
+
+      t += "<td> 📄 "+p["highlighted_author_list"]+" ("+p["year"]+"). "
+      t += p["paper_title"]+". "
+      t += "<i>"+p["abbreviated_venue"]+"</i> ";
+      t += ` <a class="btn" href="${p["pdf_url"]}">[PDF]</a>`;
       bib = p["bib"];
       bib_id  = `bibtocopy${pnum}`;
-      t += '<button id="' + bib_id + '" onclick="copyBib(`' + bib +'`, `' + bib_id + '`)">Copy bib</button>'
+      t += '<button id="' + bib_id + '" class="btn" onclick="copyBib(`' + bib +'`, `' + bib_id + '`)">Cite</button>'
       if (report_mode == true) {
       	paper_id = p["paper_id"];
-      	t += '<button id="' + paper_id + '" onclick="reportError(`' + paper_id +'`, `' + author_id + '`, `' + paper_title + '`)">Report</button>';
+      	t += '<button id="' + paper_id + '" class="btn" onclick="reportError(`' + paper_id +'`, `' + author_id + '`, `' + paper_title + '`)">Report</button>';
       }
       t += " <br><br></td>";
       t += "</tr>";
@@ -207,16 +208,16 @@ function populateList(author_data, report_mode) {
       paper_title = p["paper_title"]
       let item = document.createElement("li");
       li = ""
-      li += p["paper_title"]+"<br>"
-      li += p["highlighted_author_list"]+"<br>"
-      li += p["abbreviated_venue"]+", "+p["year"];
-      li += ` <a href="${p["pdf_url"]}">[PDF]</a>`;
+      li += p["highlighted_author_list"]+" ("+p["year"]+"). "
+      li += p["paper_title"]+". "
+      li += "<i>"+p["abbreviated_venue"]+"</i> ";
+      li += ` <a class="btn" href="${p["pdf_url"]}">[PDF]</a>`;
       bib = p["bib"];
       bib_id  = `bibtocopy${pnum}`;
-      li += '<button id="' + bib_id + '" onclick="copyBib(`' + bib +'`, `' + bib_id + '`)">Copy bib</button>';
+      li += '<button id="' + bib_id + '" class="btn" onclick="copyBib(`' + bib +'`, `' + bib_id + '`)">Cite</button>';
       if (report_mode == true) {
         paper_id = p["paper_id"];
-        li += '<button id="' + paper_id + '" onclick="reportError(`' + paper_id +'`, `' + author_id + '`, `' + paper_title + '`)">Report</button>';
+        li += '<button id="' + paper_id + '" class="btn" onclick="reportError(`' + paper_id +'`, `' + author_id + '`, `' + paper_title + '`)">Report</button>';
       }
       li += " <br><br>";
       item.innerHTML = li;

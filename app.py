@@ -29,7 +29,7 @@ def update_data(sheetname, df, spread, paper_id=None):
     if not paper_id:
         st.success('Error reported! Thanks for your feedback')
     else:
-        st.success(f'Error reported! Thanks for your feedback. Please add the following paper id into the array passed in the third argument of your API call: {paper_id}')
+        st.success(f'Error reported! Thanks for your feedback. For instant effect, please exclude this paper ID: {paper_id}')
 
 def setup_sheet_db():
     scope = ['https://spreadsheets.google.com/feeds',
