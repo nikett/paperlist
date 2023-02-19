@@ -163,13 +163,13 @@ function parseBatchPapers(obj, exclude_paper_ids) {
 function createTableRow(p, report_mode) {
     paper_title = p["paper_title"]
     t = "";
-    t += "<tr>";
+    t += `<tr class="tableRow">`;
 
     // t += "<td> 📄 "+p["highlighted_author_list"]+" ("+p["year"]+"). "
     t += "<td>"+p["paper_title"]+".<br>"
     t += p["highlighted_author_list"]+" ("+p["year"]+").<br>"
     t += "<i>"+p["abbreviated_venue"]+"</i>.<br>";
-    t += ` <a class="tableBtn" href="${p["pdf_url"]}">[PDF]</a>`;
+    t += ` <a href="${p["pdf_url"]}"><span class="tableBtn">[PDF]</span></a>`;
     bib = p["bib"];
     bib_id  = `bibtocopy${pnum}`;
     t += '<button id="' + bib_id + '" class="tableBtn" onclick="copyBib(`' + bib +'`, `' + bib_id + '`)">Cite</button>'
@@ -208,7 +208,7 @@ function createListItem(p, report_mode) {
     li += p["paper_title"]+".<br>"
     li += p["highlighted_author_list"]+" ("+p["year"]+").<br>"
     li += "<i>"+p["abbreviated_venue"]+"</i>.<br>";
-    li += ` <a class="listBtn" href="${p["pdf_url"]}">[PDF]</a>`;
+    li += ` <a href="${p["pdf_url"]}"><span class="listBtn">[PDF]</span></a>`;
     bib = p["bib"];
     bib_id  = `bibtocopy${pnum}`;
     li += '<button id="' + bib_id + '" class="listBtn" onclick="copyBib(`' + bib +'`, `' + bib_id + '`)">Cite</button>';

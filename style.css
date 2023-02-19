@@ -58,20 +58,24 @@
 
   /*ul { list-style-type: "📄 "; }*/
 
-  ul { list-style-type: none; }
+  ul { list-style-type: none; 
+    list-style: none;
+  }
 
 .sampleblock {
-  display: block;
-  font-size: .9rem;
-  margin-top: .8rem;
+    display: block;
+    font-size: 1rem;
+    margin-top: 1rem;
+    line-height: 1.5;
+    font-weight: 400;
 }
 
 .listBtn {
   align-items: center;
   padding: 5px .4rem;
   border-radius: .2rem;
-  font-size: .8rem;
-  line-height: .5;
+  font-size: .9rem;
+  line-height: .6;
 
   margin-bottom: .25rem!important;
   margin-right: .25rem!important;
@@ -84,27 +88,34 @@
   text-align: center;
   vertical-align: middle;
 
-  background-color: transparent;
+  background-color: #17a2b8;
   border: 1px solid transparent;
 
   transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
-  color: #b1040e;
-  border-color: #b1040e;
+  color: #fff;
+  border-color: #17a2b8;
 }
 
 .listBtn:hover { 
   color: #fff;
-  background-color: #b1040e;
-  border-color: #b1040e;
-  text-decoration: none;
+  background-color: #17a2b8;
+  border-color: #17a2b8;
+  text-decoration: underline;
+}
+
+.li {
+    font-size: 15px;
+    line-height: 1.5;
+    font-weight: 400;
+    text-align: match-parent;
 }
 
 .tableBtn {
   align-items: center;
   padding: 5px .4rem;
   border-radius: .2rem;
-  font-size: .8rem;
-  line-height: .5;
+  font-size: .9rem;
+  line-height: .6;
 
   margin-bottom: .25rem!important;
   margin-right: .25rem!important;
@@ -117,17 +128,24 @@
   text-align: center;
   vertical-align: middle;
 
-  background-color: transparent;
+  background-color: #17a2b8;
   border: 1px solid transparent;
 
   transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
-  color: #b1040e;
-  border-color: #b1040e;
+  color: #fff;
+  border-color: #17a2b8;
 }
 
 .tableBtn:hover { 
   color: #fff;
-  background-color: #b1040e;
-  border-color: #b1040e;
-  text-decoration: none;
+  background-color: #17a2b8;
+  border-color: #17a2b8;
+  text-decoration: underline;
+}
+
+.tableRow {
+    font-size: 15px;
+    line-height: 1.5;
+    font-weight: 400;
+    text-align: match-parent;
 }
