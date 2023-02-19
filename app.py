@@ -62,9 +62,11 @@ if __name__ == '__main__':
         author_id = params["author_id"]
         paper_title = params["paper_title"]
 
+        error_type_options = ["This paper is not mine", "My co-author is missing", "My co-author's name is spelled incorrectly", "Other"]
+
         st.write(f"Paper: {paper_title}")
-        error_desc = st.selectbox(label="Erroroneous Field", options=["Author List", "Publication Title", "Publication Venue", "Publication Year", "Paper is not mine"])
-        error_type = st.text_area(label="Please describe the relevant change to address the issue", )
+        error_type = st.selectbox(label="Erroroneous Field", options=error_type_options)
+        error_desc = st.text_area(label="Please describe the relevant change to address the issue", )
         time_stamp = datetime.now()
 
         submit = st.form_submit_button("Submit")
@@ -81,7 +83,7 @@ if __name__ == '__main__':
             db = st.session_state["db"]
             df = pd.DataFrame(db["sheet"].get_all_records())
             updated_df = pd.concat([df, report_df], ignore_index=True)
-            if error_desc == "Paper is not mine":
+            if error_desc == "This paper is not mine":
                 problem_paper_id = paper_id
             else:
                 problem_paper_id=None

@@ -160,6 +160,28 @@ function parseBatchPapers(obj, exclude_paper_ids) {
     return data;
 }
 
+function createTableRow(p, report_mode) {
+    paper_title = p["paper_title"]
+    t = "";
+    t += "<tr>";
+
+    // t += "<td> 📄 "+p["highlighted_author_list"]+" ("+p["year"]+"). "
+    t += "<td>"+p["paper_title"]+".<br>"
+    t += p["highlighted_author_list"]+" ("+p["year"]+").<br>"
+    t += "<i>"+p["abbreviated_venue"]+"</i>.<br>";
+    t += ` <a class="tableBtn" href="${p["pdf_url"]}">[PDF]</a>`;
+    bib = p["bib"];
+    bib_id  = `bibtocopy${pnum}`;
+    t += '<button id="' + bib_id + '" class="tableBtn" onclick="copyBib(`' + bib +'`, `' + bib_id + '`)">Cite</button>'
+    if (report_mode == true) {
+    paper_id = p["paper_id"];
+    t += '<button id="' + paper_id + '" class="tableBtn" onclick="reportError(`' + paper_id +'`, `' + author_id + '`, `' + paper_title + '`)">Report</button>';
+    }
+    t += " <br><br></td>";
+    t += "</tr>";
+    return t;
+}
+
 function populateTable(author_data, report_mode) {
     const section = document.querySelector('papers_list');
   
@@ -171,27 +193,31 @@ function populateTable(author_data, report_mode) {
     
     pnum = 1;
     for (const p of papers) {
-      paper_title = p["paper_title"]
-      t += "<tr>";
-
-      t += "<td> 📄 "+p["highlighted_author_list"]+" ("+p["year"]+"). "
-      t += p["paper_title"]+". "
-      t += "<i>"+p["abbreviated_venue"]+"</i> ";
-      t += ` <a class="btn" href="${p["pdf_url"]}">[PDF]</a>`;
-      bib = p["bib"];
-      bib_id  = `bibtocopy${pnum}`;
-      t += '<button id="' + bib_id + '" class="btn" onclick="copyBib(`' + bib +'`, `' + bib_id + '`)">Cite</button>'
-      if (report_mode == true) {
-      	paper_id = p["paper_id"];
-      	t += '<button id="' + paper_id + '" class="btn" onclick="reportError(`' + paper_id +'`, `' + author_id + '`, `' + paper_title + '`)">Report</button>';
-      }
-      t += " <br><br></td>";
-      t += "</tr>";
+      tr_item = createTableRow(p, report_mode);
+      t += tr_item;
       pnum += 1;
     }
 
     tbl.innerHTML = t;
     section.appendChild(tbl);
+}
+
+function createListItem(p, report_mode) {
+    paper_title = p["paper_title"];
+    li = ""
+    li += p["paper_title"]+".<br>"
+    li += p["highlighted_author_list"]+" ("+p["year"]+").<br>"
+    li += "<i>"+p["abbreviated_venue"]+"</i>.<br>";
+    li += ` <a class="listBtn" href="${p["pdf_url"]}">[PDF]</a>`;
+    bib = p["bib"];
+    bib_id  = `bibtocopy${pnum}`;
+    li += '<button id="' + bib_id + '" class="listBtn" onclick="copyBib(`' + bib +'`, `' + bib_id + '`)">Cite</button>';
+    if (report_mode == true) {
+    paper_id = p["paper_id"];
+    li += '<button id="' + paper_id + '" class="listBtn" onclick="reportError(`' + paper_id +'`, `' + author_id + '`, `' + paper_title + '`)">Report</button>';
+    }
+    li += " <br><br>";
+    return li;
 }
 
 function populateList(author_data, report_mode) {
@@ -205,22 +231,10 @@ function populateList(author_data, report_mode) {
     
     pnum = 1;
     for (const p of papers) {
-      paper_title = p["paper_title"]
       let item = document.createElement("li");
-      li = ""
-      li += p["highlighted_author_list"]+" ("+p["year"]+"). "
-      li += p["paper_title"]+". "
-      li += "<i>"+p["abbreviated_venue"]+"</i> ";
-      li += ` <a class="btn" href="${p["pdf_url"]}">[PDF]</a>`;
-      bib = p["bib"];
-      bib_id  = `bibtocopy${pnum}`;
-      li += '<button id="' + bib_id + '" class="btn" onclick="copyBib(`' + bib +'`, `' + bib_id + '`)">Cite</button>';
-      if (report_mode == true) {
-        paper_id = p["paper_id"];
-        li += '<button id="' + paper_id + '" class="btn" onclick="reportError(`' + paper_id +'`, `' + author_id + '`, `' + paper_title + '`)">Report</button>';
-      }
-      li += " <br><br>";
+      li = createListItem(p, report_mode);
       item.innerHTML = li;
+      item.className = "sampleblock";
       pnum += 1;
       ul.appendChild(item)
     }

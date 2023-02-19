@@ -47,9 +47,26 @@
     width: 80%;
     float: left;
   }
+  
+  section p {
+    margin: 2px 0;
+  }
+  
+  section ul {
+    margin-top: 0;
+  }
 
-/* CSS */
-.btn {
+  /*ul { list-style-type: "📄 "; }*/
+
+  ul { list-style-type: none; }
+
+.sampleblock {
+  display: block;
+  font-size: .9rem;
+  margin-top: .8rem;
+}
+
+.listBtn {
   align-items: center;
   padding: 5px .4rem;
   border-radius: .2rem;
@@ -75,20 +92,42 @@
   border-color: #b1040e;
 }
 
-.btn:hover { 
+.listBtn:hover { 
   color: #fff;
   background-color: #b1040e;
   border-color: #b1040e;
   text-decoration: none;
 }
-  
-  section p {
-    margin: 2px 0;
-  }
-  
-  section ul {
-    margin-top: 0;
-  }
 
-  ul { list-style-type: "📄 "; }
-  
+.tableBtn {
+  align-items: center;
+  padding: 5px .4rem;
+  border-radius: .2rem;
+  font-size: .8rem;
+  line-height: .5;
+
+  margin-bottom: .25rem!important;
+  margin-right: .25rem!important;
+  margin-top: .25rem!important;
+
+  display: inline-block;
+  font-weight: 400;
+  border: 1px solid transparent;
+
+  text-align: center;
+  vertical-align: middle;
+
+  background-color: transparent;
+  border: 1px solid transparent;
+
+  transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+  color: #b1040e;
+  border-color: #b1040e;
+}
+
+.tableBtn:hover { 
+  color: #fff;
+  background-color: #b1040e;
+  border-color: #b1040e;
+  text-decoration: none;
+}
