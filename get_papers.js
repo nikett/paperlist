@@ -166,9 +166,10 @@ function createTableRow(p, report_mode) {
     t += `<tr class="tableRow">`;
 
     // t += "<td> 📄 "+p["highlighted_author_list"]+" ("+p["year"]+"). "
-    t += "<td>"+p["paper_title"]+".<br>"
-    t += p["highlighted_author_list"]+" ("+p["year"]+").<br>"
-    t += "<i>"+p["abbreviated_venue"]+"</i>.<br>";
+    t += "<td>"+p["paper_title"]+".<br>";
+    t += p["highlighted_author_list"] + "<br>";
+    ven = p["abbreviated_venue"];
+    t += "<i>" + ven + " " + p["year"] + " </i><br>";
     t += ` <a href="${p["pdf_url"]}"><span class="tableBtn">[PDF]</span></a>`;
     bib = p["bib"];
     bib_id  = `bibtocopy${pnum}`;
@@ -206,9 +207,10 @@ function createListItem(p, report_mode) {
     paper_title = p["paper_title"];
     li = ""
     li += p["paper_title"]+".<br>"
-    li += p["highlighted_author_list"]+" ("+p["year"]+").<br>"
-    li += "<i>"+p["abbreviated_venue"]+"</i>.<br>";
-    li += ` <a href="${p["pdf_url"]}"><span class="listBtn">[PDF]</span></a>`;
+    li += p["highlighted_author_list"] + "<br>";
+    ven = p["abbreviated_venue"];
+    li += "<i>" + ven + " " + p["year"] + " </i><br>";
+    li += ` <a href="${p["pdf_url"]}"><span class="listBtn">PDF</span></a>`;
     bib = p["bib"];
     bib_id  = `bibtocopy${pnum}`;
     li += '<button id="' + bib_id + '" class="listBtn" onclick="copyBib(`' + bib +'`, `' + bib_id + '`)">Cite</button>';
