@@ -144,6 +144,21 @@ function paperListToJSON(obj, exclude_paper_ids) {
     return data;
 }
 
+function deduplicateLabPapers(papers) {
+    var dedupLabPapers = [];
+    var paperIds = {};
+    for (var i=0; i < papers.length; i++) {
+        if (papers[i]["paper_id"] in paperIds) {
+            continue;
+        }
+        else {
+            paperIds[papers[i]["paper_id"]] = 1;
+            dedupLabPapers.push(papers[i]);
+        }
+    }
+    return dedupLabPapers;
+}
+
 function parseBatchPapers(obj, exclude_paper_ids) {
     var labAuthorsMeta = [];
     var labPapers = [];
@@ -156,7 +171,8 @@ function parseBatchPapers(obj, exclude_paper_ids) {
     }
     var data = {};
     data["authors"] = labAuthorsMeta;
-    data["json_paper_list"] = labPapers;
+    dedupLabPapers = deduplicateLabPapers(labPapers);
+    data["json_paper_list"] = dedupLabPapers;
 
     return data;
 }
