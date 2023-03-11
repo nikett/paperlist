@@ -19,6 +19,7 @@ async function populate_lab_papers(scholar_ids, format="list", exclude_paper_ids
     const papersText = await response.text();
     const papersjson = JSON.parse(papersText);
     const allPaperData = parseBatchPapers(papersjson, exclude_paper_ids);
+
     // turn off highlighting author names for lab (current design decision)
     if (format == "list") {
       populateList(allPaperData, report_mode, false);
@@ -29,6 +30,9 @@ async function populate_lab_papers(scholar_ids, format="list", exclude_paper_ids
     else if (format == "json") {
       return allPaperData;
     }
+    paperIds = get_paper_ids(allPaperData);
+    paper_ids_str = String(paperIds);
+    fetch_figure(paperIds);
 }
 
 async function populate_papers(scholar_id_str, format="list", exclude_paper_ids=[], report_mode=false) {
@@ -44,6 +48,7 @@ async function populate_papers(scholar_id_str, format="list", exclude_paper_ids=
     const papersText = await response.text();
     const papersjson = JSON.parse(papersText);
     jsonPaperList = paperListToJSON(papersjson, exclude_paper_ids);
+
     if (format == "list") {
       populateList(jsonPaperList, report_mode, true);
     }
@@ -53,6 +58,77 @@ async function populate_papers(scholar_id_str, format="list", exclude_paper_ids=
     else if (format == "json") {
       return jsonPaperList;
     }
+    paperIds = get_paper_ids(jsonPaperList);
+    paper_ids_str = String(paperIds);
+    fetch_figure(paper_ids_str);
+}
+
+function fetch_figure(paper_ids) {
+	// currently, this API endpoint supports loading upto 9 figures; when a 10th ID is added, it returns 502 Bad Gateway error
+    // var endpoint = "https://qzi4sdg7tilsfj4dnt2pmrnadm0xaedr.lambda-url.us-west-2.on.aws/?id=" + paper_ids;
+
+    // below string is for testing purpose
+    paper_ids = "63cd10c4ca6733a8894d55cf1343636fa816cf7c,7bb907e754942b832bacf7889ba1d6bd72945ca0,8c108052266ef5d530c4adf19629e23a989c83ac,b71c245e093568d8c95aa889f968ce72b18e3d8b,3eeedb6651a629a105c1185ada862e2cad7a0522,481c25f4bf5daa01c6f39172d211e076533b388e,d1e5ac96faf9165ea60bf593c0da2a1f55e390fd,3d2035edd4dd48e1e638279409e11bf689c461e1,2b6e639b00bcd7765ebdad2a84ceae35b756fdc4"
+    var endpoint = "https://qzi4sdg7tilsfj4dnt2pmrnadm0xaedr.lambda-url.us-west-2.on.aws/?id=" + paper_ids;
+    fetch(endpoint)
+        .then(response => response.json())
+        .then(data => {
+        	console.log(data);
+
+        	if ("main" in data) {
+	        	if (data.main == null) {
+	        		console.log("Figures not available for some paper IDs at url:"+endpoint);
+	        		return;
+	        	}
+	        }
+
+        	pnum = 1;
+        	data.forEach(item => {
+
+        		// Get the figure URL from the JSON response
+	            var figureUrl = item.main;
+
+	            // Create an image element and set the source to the figure URL
+	            var figure = document.createElement("img");
+	            figure.src = figureUrl;
+	            // figure.onclick = function() {
+	            // 	// this starts downloading the image
+	            // 	window.open(figureUrl, '_blank');
+	            // }
+
+	            figure.onclick = function() {
+	            	const img_window = window.open(figureUrl, '_blank');
+		            img_window.document.write(`
+		            	<html>
+		            	<head>
+		            	</head>
+		            	<body>
+		            	<img src=${figureUrl}></img>
+		            	</body>
+		            	</html>`
+		            	);
+	        	}
+
+
+	            // Add the image to the figure container element
+	            ele_id = "thumbnail_"+pnum.toString();
+	            var figureContainer = document.getElementById(ele_id);
+	            figureContainer.innerHTML = "";
+	            figureContainer.appendChild(figure);
+	            pnum += 1;
+        	});
+        })
+        .catch(error => {
+            console.error("Error fetching figure:", error);
+        });
+}
+
+function get_paper_ids(papersjson) {
+	var paper_ids = [];
+	for (const p of papersjson["json_paper_list"]) {
+		paper_ids.push(p["paper_id"]);
+	}
+	return paper_ids;
 }
 
 function get_shortest_str(arr) {
@@ -177,12 +253,14 @@ function parseBatchPapers(obj, exclude_paper_ids) {
     return data;
 }
 
-function createTableRow(p, report_mode, highlight) {
+function createTableRow(p, report_mode, highlight, pnum) {
     paper_title = p["paper_title"]
     t = "";
     t += `<tr class="tableRow">`;
-
-    t += "<td>"+p["paper_title"]+".<br>";
+    // table display is mis-aligned; figure appears to start a little higher than text which ends a little lower
+    t += "<td>"
+    t += '<div class="samplerowfigure"><figure id=thumbnail_'+pnum.toString()+'></figure></div>'
+    t += `<div class="samplerowdata">` + p["paper_title"]+".<br>";
     if (highlight == true) {
         t += p["highlighted_author_list"] + "<br>";
     }
@@ -199,7 +277,7 @@ function createTableRow(p, report_mode, highlight) {
         paper_id = p["paper_id"];
         t += '<button id="' + paper_id + '" class="tableBtn" onclick="reportError(`' + paper_id +'`, `' + author_id + '`, `' + paper_title + '`)">Report</button>';
     }
-    t += " <br><br></td>";
+    t += " <br><br></td></div>";
     t += "</tr>";
     return t;
 }
@@ -214,7 +292,7 @@ function populateTable(author_data, report_mode, highlight) {
     
     pnum = 1;
     for (const p of papers) {
-      tr_item = createTableRow(p, report_mode, highlight);
+      tr_item = createTableRow(p, report_mode, highlight, pnum);
       t += tr_item;
       pnum += 1;
     }
@@ -223,11 +301,11 @@ function populateTable(author_data, report_mode, highlight) {
     section.appendChild(tbl);
 }
 
-function createListItem(p, report_mode, highlight) {
+function createListItem(p, report_mode, highlight, pnum) {
     paper_title = p["paper_title"];
     li = ""
-    li += p["paper_title"]+".<br>"
-    // console.log(highlight);
+    li += '<div><figure id=thumbnail_'+pnum.toString()+'></figure></div>'
+    li += "<div>"+p["paper_title"]+".<br>"
     if (highlight == true) {
         li += p["highlighted_author_list"] + "<br>";
     }
@@ -244,7 +322,7 @@ function createListItem(p, report_mode, highlight) {
         paper_id = p["paper_id"];
         li += '<button id="' + paper_id + '" class="listBtn" onclick="reportError(`' + paper_id +'`, `' + author_id + '`, `' + paper_title + '`)">Report</button>';
     }
-    li += " <br><br>";
+    li += " <br><br></div>";
     return li;
 }
 
@@ -259,7 +337,7 @@ function populateList(author_data, report_mode, highlight) {
     pnum = 1;
     for (const p of papers) {
       let item = document.createElement("li");
-      li = createListItem(p, report_mode, highlight);
+      li = createListItem(p, report_mode, highlight, pnum);
       item.innerHTML = li;
       item.className = "sampleblock";
       pnum += 1;

@@ -63,11 +63,27 @@
   }
 
 .sampleblock {
-    display: block;
+    display: flex;
     font-size: 1rem;
     margin-top: 1rem;
     line-height: 1.5;
     font-weight: 400;
+}
+
+.samplerowfigure {
+    display: table-cell;
+}
+
+.samplerowdata {
+    display: table-cell;
+    font-size: 1rem;
+    line-height: 1.5;
+    font-weight: 400;
+}
+
+img {
+  height: 5rem;
+  width: 5rem;
 }
 
 .listBtn {
@@ -101,13 +117,6 @@
   background-color: #17a2b8;
   border-color: #17a2b8;
   text-decoration: underline;
-}
-
-.li {
-    font-size: 15px;
-    line-height: 1.5;
-    font-weight: 400;
-    text-align: match-parent;
 }
 
 .tableBtn {
