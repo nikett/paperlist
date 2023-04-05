@@ -62,7 +62,7 @@
     list-style: none;
   }
 
-/*a {
+a {
   color: #1772d0;
 }
 
@@ -70,7 +70,7 @@
   font-family: ‘Lato’, Verdana, Helvetica, sans-serif;
   font-size: 15px;
   font-weight: 700;
-}*/
+}
 
 .sampleblock {
     display: flex;

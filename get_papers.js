@@ -89,7 +89,7 @@ function fetch_figure(all_paper_ids) {
 	    fetch(endpoint)
 	        .then(response => response.json())
 	        .then(data => {
-	        	// console.log(data);
+	        	console.log(data);
 	        	console.log(paper_ids_arr);
 
 	        	// till now, if there have been errors in API response, it returns a dict, not an array
@@ -126,6 +126,7 @@ function fetch_figure(all_paper_ids) {
 
 		            // I'm using the S2 figure url and parsing that as the paper id; maybe this is not fully correct
 		            // For one case, it gives me a paper id that is not in the original paper_ids sent to the API
+		            // It does not work with paper id 481c25f4bf5daa01c6f39172d211e076533b388e and instead returns aa9972d02863a5da866d18244134105fb0f83651
 		            let paper_id_exists = paper_ids_arr.includes(api_paper_id);
 		            if (paper_id_exists) {
 
