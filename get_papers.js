@@ -63,64 +63,110 @@ async function populate_papers(scholar_id_str, format="list", exclude_paper_ids=
     fetch_figure(paper_ids_str);
 }
 
-function fetch_figure(paper_ids) {
+// Below is possible code for possibly reading data from JSON
+function readTextFile(file) {
+    fetch('file.txt')
+    .then(response => response.text())
+    .then(text => console.log(text))
+}
+
+function fetch_figure(all_paper_ids) {
+
 	// currently, this API endpoint supports loading upto 9 figures; when a 10th ID is added, it returns 502 Bad Gateway error
     // var endpoint = "https://qzi4sdg7tilsfj4dnt2pmrnadm0xaedr.lambda-url.us-west-2.on.aws/?id=" + paper_ids;
 
-    // below string is for testing purpose
-    paper_ids = "63cd10c4ca6733a8894d55cf1343636fa816cf7c,7bb907e754942b832bacf7889ba1d6bd72945ca0,8c108052266ef5d530c4adf19629e23a989c83ac,b71c245e093568d8c95aa889f968ce72b18e3d8b,3eeedb6651a629a105c1185ada862e2cad7a0522,481c25f4bf5daa01c6f39172d211e076533b388e,d1e5ac96faf9165ea60bf593c0da2a1f55e390fd,3d2035edd4dd48e1e638279409e11bf689c461e1,2b6e639b00bcd7765ebdad2a84ceae35b756fdc4"
-    var endpoint = "https://qzi4sdg7tilsfj4dnt2pmrnadm0xaedr.lambda-url.us-west-2.on.aws/?id=" + paper_ids;
-    fetch(endpoint)
-        .then(response => response.json())
-        .then(data => {
-        	console.log(data);
+    // slice 4 paper ids at a time and use
+    const all_paper_ids_arr = all_paper_ids.split(',');
+    for (j=0; j<all_paper_ids_arr.length; j=j+4) {
+    	// get elements from array from j to j+4
+    	// perform API call there
+    	// for the last call, make sure that j+x to length(all_paper_ids) is only used for API call
+    	const paper_ids_arr = all_paper_ids_arr.slice(j, j+4);
+    	const paper_ids = paper_ids_arr.join(',');
+    	// below string is for testing purpose
+	    // paper_ids = "63cd10c4ca6733a8894d55cf1343636fa816cf7c,7bb907e754942b832bacf7889ba1d6bd72945ca0,8c108052266ef5d530c4adf19629e23a989c83ac,b71c245e093568d8c95aa889f968ce72b18e3d8b"
+	    var endpoint = "https://qzi4sdg7tilsfj4dnt2pmrnadm0xaedr.lambda-url.us-west-2.on.aws/?id=" + paper_ids;
+	    fetch(endpoint)
+	        .then(response => response.json())
+	        .then(data => {
+	        	// console.log(data);
+	        	console.log(paper_ids_arr);
 
-        	if ("main" in data) {
-	        	if (data.main == null) {
+	        	// till now, if there have been errors in API response, it returns a dict, not an array
+	        	// the below condition handles that
+	        	if (data.success == false) {
+	        		// for failures, open local JSON which should be paper id -> figure url and populate using those
 	        		console.log("Figures not available for some paper IDs at url:"+endpoint);
-	        		return;
-	        	}
-	        }
-
-        	pnum = 1;
-        	data.forEach(item => {
-
-        		// Get the figure URL from the JSON response
-	            var figureUrl = item.main;
-
-	            // Create an image element and set the source to the figure URL
-	            var figure = document.createElement("img");
-	            figure.src = figureUrl;
-	            // figure.onclick = function() {
-	            // 	// this starts downloading the image
-	            // 	window.open(figureUrl, '_blank');
-	            // }
-
-	            figure.onclick = function() {
-	            	const img_window = window.open(figureUrl, '_blank');
-		            img_window.document.write(`
-		            	<html>
-		            	<head>
-		            	</head>
-		            	<body>
-		            	<img src=${figureUrl}></img>
-		            	</body>
-		            	</html>`
-		            	);
+	        		// Below is code for possibly reading stuff from JSON
+	        		// let dummy_json = "";
+	        		// dummy_json = readTextFile('dummy.json');
+	    //     		const reader = new FileReader();
+	    //     		reader.addEventListener('load', (event) => {
+					//     console.log(event.target.result);
+					// });
+					// reader.readAsDataURL('file:///Users/apple/Documents/Python/paperlist/dummy.json');
+	        		// console.log(dummy_json);
+	        		for (i=0; i< paper_ids_arr.length; i++) {
+		        		var figure = document.createElement("img");
+		        		figure.src = "https://pbs.twimg.com/profile_images/1138107711923544064/qDsIE-Xl_400x400.png";
+		        		ele_id = "thumbnail_"+paper_ids_arr[i];
+			            var figureContainer = document.getElementById(ele_id);
+			            figureContainer.innerHTML = "";
+			            figureContainer.appendChild(figure);
+			        }
+			        return;
 	        	}
 
+	        	data.forEach(item => {
 
-	            // Add the image to the figure container element
-	            ele_id = "thumbnail_"+pnum.toString();
-	            var figureContainer = document.getElementById(ele_id);
-	            figureContainer.innerHTML = "";
-	            figureContainer.appendChild(figure);
-	            pnum += 1;
-        	});
-        })
-        .catch(error => {
-            console.error("Error fetching figure:", error);
-        });
+	        		// Get the figure URL from the JSON response
+		            var figureUrl = item.main;
+		            var api_paper_id_arr = figureUrl.split('/');
+		            var api_paper_id = api_paper_id_arr[api_paper_id_arr.length-2];
+
+		            // I'm using the S2 figure url and parsing that as the paper id; maybe this is not fully correct
+		            // For one case, it gives me a paper id that is not in the original paper_ids sent to the API
+		            let paper_id_exists = paper_ids_arr.includes(api_paper_id);
+		            if (paper_id_exists) {
+
+			            // Create an image element and set the source to the figure URL
+			            var figure = document.createElement("img");
+			            figure.src = figureUrl;
+			            // figure.onclick = function() {
+			            // 	// this starts downloading the image
+			            // 	window.open(figureUrl, '_blank');
+			            // }
+
+			            figure.onclick = function() {
+			            	const img_window = window.open(figureUrl, '_blank');
+				            img_window.document.write(`
+				            	<html>
+				            	<head>
+				            	</head>
+				            	<body>
+				            	<img src=${figureUrl}></img>
+				            	</body>
+				            	</html>`
+				            	);
+			        	}
+
+
+			            // Add the image to the figure container element
+			            ele_id = "thumbnail_"+api_paper_id;
+			            var figureContainer = document.getElementById(ele_id);
+			            figureContainer.innerHTML = "";
+			            figureContainer.appendChild(figure);
+			        }
+			       	else {
+			       		console.log("Unknown paper id in response "+api_paper_id);
+			       	}
+	        	});
+	        })
+	        .catch(error => {
+	            console.error("Error fetching figure:", error);
+	        });
+    }
+
 }
 
 function get_paper_ids(papersjson) {
@@ -259,7 +305,7 @@ function createTableRow(p, report_mode, highlight, pnum) {
     t += `<tr class="tableRow">`;
     // table display is mis-aligned; figure appears to start a little higher than text which ends a little lower
     t += "<td>"
-    t += '<div class="samplerowfigure"><figure id=thumbnail_'+pnum.toString()+'></figure></div>'
+    t += '<div class="samplerowfigure"><figure id=thumbnail_'+p["paper_id"]+'></figure></div>'
     t += `<div class="samplerowdata">` + p["paper_title"]+".<br>";
     if (highlight == true) {
         t += p["highlighted_author_list"] + "<br>";
@@ -301,28 +347,37 @@ function populateTable(author_data, report_mode, highlight) {
     section.appendChild(tbl);
 }
 
-function createListItem(p, report_mode, highlight, pnum) {
+function createListItem(p, report_mode, highlight) {
     paper_title = p["paper_title"];
-    li = ""
-    li += '<div><figure id=thumbnail_'+pnum.toString()+'></figure></div>'
-    li += "<div>"+p["paper_title"]+".<br>"
+    highlighted_author_list = p["highlighted_author_list"];
+    author_list = p["author_list"];
+    pdf_url = p["pdf_url"];
+    year = p["year"];
+    abbreviated_venue = p["abbreviated_venue"];
+
+    li = ''
+    li += '<div><figure id=thumbnail_'+p["paper_id"]+'></figure></div>';
+    // console.log("thumbnail_"+p["paper_id"]);
+    li += "<div>"
+    li += ` <a href="${p["pdf_url"]}"><papertitle>${paper_title}</papertitle></a><br>`;
     if (highlight == true) {
-        li += p["highlighted_author_list"] + "<br>";
+        li += highlighted_author_list + "<br>";
     }
     else {
-        li += p["author_list"] + "<br>";
+        li += author_list + "<br>";
     }
-    ven = p["abbreviated_venue"];
-    li += "<i>" + ven + " " + p["year"] + " </i><br>";
-    li += ` <a href="${p["pdf_url"]}"><span class="listBtn">PDF</span></a>`;
+    li += "<em>" + abbreviated_venue + "</em>, " + year + "<br>";
     bib = p["bib"];
     bib_id  = `bibtocopy${pnum}`;
-    li += '<button id="' + bib_id + '" class="listBtn" onclick="copyBib(`' + bib +'`, `' + bib_id + '`)">Cite</button>';
+
+    li += '<button id="' + bib_id + '" class="listBtn" onclick="copyBib(`' + bib +'`, `' + bib_id + '`)">bibtex</button>';
+
     if (report_mode == true) {
         paper_id = p["paper_id"];
         li += '<button id="' + paper_id + '" class="listBtn" onclick="reportError(`' + paper_id +'`, `' + author_id + '`, `' + paper_title + '`)">Report</button>';
     }
-    li += " <br><br></div>";
+    li += " <br><br>";
+    li += "</div>";
     return li;
 }
 
