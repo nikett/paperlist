@@ -225,21 +225,26 @@ function populateTable(author_data, report_mode, highlight) {
 
 function createListItem(p, report_mode, highlight) {
     paper_title = p["paper_title"];
-    li = ""
-    li += p["paper_title"]+".<br>"
-    // console.log(highlight);
+    highlighted_author_list = p["highlighted_author_list"];
+    author_list = p["author_list"];
+    pdf_url = p["pdf_url"];
+    year = p["year"];
+    abbreviated_venue = p["abbreviated_venue"];
+
+    li = ''
+    li += ` <a href="${p["pdf_url"]}"><papertitle>${paper_title}</papertitle></a><br>`;
     if (highlight == true) {
-        li += p["highlighted_author_list"] + "<br>";
+        li += highlighted_author_list + "<br>";
     }
     else {
-        li += p["author_list"] + "<br>";
+        li += author_list + "<br>";
     }
-    ven = p["abbreviated_venue"];
-    li += "<i>" + ven + " " + p["year"] + " </i><br>";
-    li += ` <a href="${p["pdf_url"]}"><span class="listBtn">PDF</span></a>`;
+    li += "<em>" + abbreviated_venue + "</em>, " + year + "<br>";
     bib = p["bib"];
     bib_id  = `bibtocopy${pnum}`;
-    li += '<button id="' + bib_id + '" class="listBtn" onclick="copyBib(`' + bib +'`, `' + bib_id + '`)">Cite</button>';
+
+    li += '<button id="' + bib_id + '" class="listBtn" onclick="copyBib(`' + bib +'`, `' + bib_id + '`)">bibtex</button>';
+
     if (report_mode == true) {
         paper_id = p["paper_id"];
         li += '<button id="' + paper_id + '" class="listBtn" onclick="reportError(`' + paper_id +'`, `' + author_id + '`, `' + paper_title + '`)">Report</button>';

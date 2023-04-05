@@ -62,6 +62,16 @@
     list-style: none;
   }
 
+a {
+  color: #1772d0;
+}
+
+.papertitle {
+  font-family: ‘Lato’, Verdana, Helvetica, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+}
+
 .sampleblock {
     display: block;
     font-size: 1rem;
