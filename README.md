@@ -11,10 +11,12 @@ flowchart  LR
 
 A[load_json1_if_exists] --> B[initial_rendering]
 B --> C[check_refresh]
-C --> D[updated_json2]
-D --> E[revised_rendering]
-E --> F[download_json]
-F --> G[webpage_owner_updates_json1]
+C --> D[unchanged_entries]
+C --> E[updated_entries]
+D --> F[revised_entries]
+E --> F[revised_entries]
+F --> G[render_revised]
+G --> H[download_json\nwebpage_owner_updates_json1]
 ```
 
 
