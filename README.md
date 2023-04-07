@@ -3,6 +3,21 @@
 This JS script uses the Semantic Scholar API to query the publication list of an author (or a lab/group) using their Semantic Scholar ID(s) and offers multiple options to academics and labs to incorporate them into their websites.
 Using the list and table options also provides easy-to-click buttons that can copy bib entries as well as report issues with the paper.
 
+## Flow
+
+
+```mermaid
+flowchart  LR
+
+A[load_json1_if_exists] --> B[initial_rendering]
+B --> C[check_refresh]
+C --> D[updated_json2]
+D --> E[revised_rendering]
+E --> F[download_json]
+F --> G[webpage_owner_updates_json1]
+```
+
+
 ## Usage
 
 Please add the following code snippet inside the head tag of the webpage.
