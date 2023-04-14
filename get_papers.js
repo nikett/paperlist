@@ -209,9 +209,6 @@ async function fetch_figure(all_paper_ids, papers_json_dict, cache_json_dict) {
                 console.error("Error fetching figure:", error);
             });
     }
-    if (Object.keys(cache_json_dict).length === 0) {
-        return papers_json_dict;
-    }
     return reconcile_paper_json(figure_urls_json, papers_json_dict, cache_json_dict, alternate_figure_url)
 }
 
@@ -219,7 +216,12 @@ function reconcile_paper_json(figure_urls_json, papers_json_dict, cache_json_dic
 
     for (let key in figure_urls_json) {
         if (figure_urls_json[key] == alternate_figure_url) {
-            papers_json_dict[key]["figure_url"] = cache_json_dict[key]["figure_url"];
+        	if (Object.keys(cache_json_dict).length === 0) {
+        		papers_json_dict[key]["figure_url"] = alternate_figure_url;
+        	}
+        	else {
+        		papers_json_dict[key]["figure_url"] = cache_json_dict[key]["figure_url"];
+        	}
         }
         else {
             papers_json_dict[key]["figure_url"] = figure_urls_json[key];
