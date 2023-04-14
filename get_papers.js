@@ -43,8 +43,16 @@ async function populate_papers(cache_url, scholar_id_str, format="list", exclude
     //     }
     // });
 
-    const cache_data = await loadJsonFile(cache_url);
-    render_papers(cache_data, report_mode, format, true);
+    var cache_dict = {};
+
+    if (cache_url !== "") {
+        console.log("Here");
+        const cache_data = await loadJsonFile(cache_url);
+        render_papers(cache_data, report_mode, format, true);
+        for (const p of cache_data["json_paper_list"]) {
+            cache_dict[p["paper_id"]] = p;
+        }
+    }
 
     const url = 'https://api.semanticscholar.org/graph/v1/author/';
     const papers_fields = ['title', 'year', 'paperId', 'venue', 'citationStyles', 'citationCount', 'authors', 'externalIds', 'url', 'publicationVenue', 'isOpenAccess', 'openAccessPdf'];
@@ -64,11 +72,6 @@ async function populate_papers(cache_url, scholar_id_str, format="list", exclude
     var papers_dict = {};
     for (const p of jsonPaperList["json_paper_list"]) {
         papers_dict[p["paper_id"]] = p;
-    }
-
-    var cache_dict = {};
-    for (const p of cache_data["json_paper_list"]) {
-        cache_dict[p["paper_id"]] = p;
     }
 
     updated_json = await fetch_figure(paper_ids_str, papers_dict, cache_dict);
@@ -205,6 +208,9 @@ async function fetch_figure(all_paper_ids, papers_json_dict, cache_json_dict) {
             .catch(error => {
                 console.error("Error fetching figure:", error);
             });
+    }
+    if (Object.keys(cache_json_dict).length === 0) {
+        return papers_json_dict;
     }
     return reconcile_paper_json(figure_urls_json, papers_json_dict, cache_json_dict, alternate_figure_url)
 }
