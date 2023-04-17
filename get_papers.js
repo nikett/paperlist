@@ -231,25 +231,28 @@ function createListItem(p, report_mode, highlight) {
     year = p["year"];
     abbreviated_venue = p["abbreviated_venue"];
 
-    li = ''
-    li += ` <a href="${p["pdf_url"]}"><papertitle>${paper_title}</papertitle></a><br>`;
+    li = '';
+    li += '<div class="s2-list__paper-content"><h6 class="s2-list__title"><a href="' + pdf_url + '" class="s2-list__link" target="_blank">' + paper_title +'</a></h6>';
+    li += '<p class="s2-list__meta-list"><span class="s2-list__meta s2-list__meta--authors">';
     if (highlight == true) {
-        li += highlighted_author_list + "<br>";
+        li += highlighted_author_list;
     }
     else {
-        li += author_list + "<br>";
+        li += author_list;
     }
-    li += "<em>" + abbreviated_venue + "</em>, " + year + "<br>";
+    li += '</span>';
+    li += '<span class="s2-list__meta s2-list__meta--venue">' + abbreviated_venue + "</span>, <span class='s2-list__meta s2-list__meta--year'>" + year + "</span></p>";
+    li += '<div class="s2-list__button-list">';
     bib = p["bib"];
     bib_id  = `bibtocopy${pnum}`;
 
-    li += '<button id="' + bib_id + '" class="listBtn" onclick="copyBib(`' + bib +'`, `' + bib_id + '`)">bibtex</button>';
+    li += '<button id="' + bib_id + '" class="s2-list__button s2-list__button--secondary" onclick="copyBib(`' + bib +'`, `' + bib_id + '`)">bibtex</button>';
 
     if (report_mode == true) {
         paper_id = p["paper_id"];
-        li += '<button id="' + paper_id + '" class="listBtn" onclick="reportError(`' + paper_id +'`, `' + author_id + '`, `' + paper_title + '`)">Report</button>';
+        li += '<button id="' + paper_id + '" class="s2-list__button s2-list__button--secondary" onclick="reportError(`' + paper_id +'`, `' + author_id + '`, `' + paper_title + '`)">Report</button>';
     }
-    li += " <br><br>";
+    li += '</div></div>';
     return li;
 }
 
@@ -259,14 +262,15 @@ function populateList(author_data, report_mode, highlight) {
     const ul = document.createElement('ul');
     var t = "" ; // list content.
 
-    papers = author_data["json_paper_list"]
+    papers = author_data["json_paper_list"];
+    ul.className = "s2-list";
     
     pnum = 1;
     for (const p of papers) {
       let item = document.createElement("li");
       li = createListItem(p, report_mode, highlight);
       item.innerHTML = li;
-      item.className = "sampleblock";
+      item.className = "s2-list__paper";
       pnum += 1;
       ul.appendChild(item)
     }
