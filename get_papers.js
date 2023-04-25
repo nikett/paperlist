@@ -232,27 +232,28 @@ function createListItem(p, report_mode, highlight) {
     abbreviated_venue = p["abbreviated_venue"];
 
     li = '';
-    li += '<div class="s2-list__paper-content"><h6 class="s2-list__title"><a href="' + pdf_url + '" class="s2-list__link" target="_blank">' + paper_title +'</a></h6>';
-    li += '<p class="s2-list__meta-list"><span class="s2-list__meta s2-list__meta--authors">';
+    li += '<div class="s2-list__paper-shell">' // Start
+    li += '<a href="' + pdf_url + '/figure/0" class="s2-list__image-holder" target="_blank"><img src="https://picsum.photos/id/' + Math.floor(Math.random() * 640) + '/300/169" alt="First figure in '+ paper_title +'" class="s2-list__image" /></a>'; // Image, TODO: get image source, correct url, make sure alt text is correct & descriptive
+    li += '<div class="s2-list__paper-content"><h6 class="s2-list__title"><a href="' + pdf_url + '" class="s2-list__link" target="_blank">' + paper_title +'</a></h6>'; // Title
+    li += '<p class="s2-list__meta-list"><span class="s2-list__meta s2-list__meta--authors">'; // Start Meta, Start Authors
     if (highlight == true) {
         li += highlighted_author_list;
     }
     else {
         li += author_list;
     }
-    li += '</span>';
-    li += '<span class="s2-list__meta s2-list__meta--venue">' + abbreviated_venue + "</span>, <span class='s2-list__meta s2-list__meta--year'>" + year + "</span></p>";
-    li += '<div class="s2-list__button-list">';
+    li += '</span>'; // End Authors
+    li += '<span class="s2-list__meta s2-list__meta--venue">' + abbreviated_venue + '</span>, <span class="s2-list__meta s2-list__meta--year">' + year + '</span>' // Venue & Year
+    li += '</p>'; // End Meta
+    li += '<div class="s2-list__button-list">'; // Start Controls
     bib = p["bib"];
     bib_id  = `bibtocopy${pnum}`;
-
-    li += '<button id="' + bib_id + '" class="s2-list__button s2-list__button--secondary" onclick="copyBib(`' + bib +'`, `' + bib_id + '`)">bibtex</button>';
-
+    li += '<button id="' + bib_id + '" class="s2-list__button s2-list__button--secondary" onclick="copyBib(`' + bib +'`, `' + bib_id + '`)">bibtex</button>'; //Cite Button
     if (report_mode == true) {
         paper_id = p["paper_id"];
         li += '<button id="' + paper_id + '" class="s2-list__button s2-list__button--secondary" onclick="reportError(`' + paper_id +'`, `' + author_id + '`, `' + paper_title + '`)">Report</button>';
     }
-    li += '</div></div>';
+    li += '</div></div></div>'; // End Controls
     return li;
 }
 
