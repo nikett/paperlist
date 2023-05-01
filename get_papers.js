@@ -31,7 +31,31 @@ async function populate_lab_papers(scholar_ids, format="list", exclude_paper_ids
     }
 }
 
-async function populate_papers(scholar_id_str, format="list", exclude_paper_ids=[], report_mode=false) {
+
+function render_papers(jsonPaperList, report_mode, format, highlight=true) {
+    if (format == "list") {
+      populateList(jsonPaperList, report_mode, highlight);
+    }
+    else if (format == "table") {
+      populateTable(jsonPaperList, report_mode, highlight);
+    }
+    else if (format == "json") {
+      return jsonPaperList;
+    }
+}
+
+async function populate_papers(scholar_id_str, cache_url="", format="list", exclude_paper_ids=[], report_mode=false) {
+
+    // Start loading the page with cache.
+    var cache_dict = {};
+    if (cache_url !== "") {
+        console.log("Loading cached content first...");
+        const cache_data = await loadJsonFile(cache_url);
+        render_papers(cache_data, report_mode, format);
+        for (const p of cache_data["json_paper_list"]) {
+            cache_dict[p["paper_id"]] = p;
+        }
+    }
 
     const url = 'https://api.semanticscholar.org/graph/v1/author/';
     const papers_fields = ['title', 'year', 'paperId', 'venue', 'citationStyles', 'citationCount', 'authors', 'externalIds', 'url', 'publicationVenue', 'isOpenAccess', 'openAccessPdf'];
@@ -44,15 +68,153 @@ async function populate_papers(scholar_id_str, format="list", exclude_paper_ids=
     const papersText = await response.text();
     const papersjson = JSON.parse(papersText);
     jsonPaperList = paperListToJSON(papersjson, exclude_paper_ids);
-    if (format == "list") {
-      populateList(jsonPaperList, report_mode, true);
+
+    paperIds = get_paper_ids(jsonPaperList);
+    paper_ids_str = String(paperIds);
+
+    var papers_dict = {};
+    for (const p of jsonPaperList["json_paper_list"]) 
+        papers_dict[p["paper_id"]] = p;
+    
+    updated_json = await fetch_figure(paper_ids_str, papers_dict, cache_dict);
+    var updatedJsonPaperList = {'author_meta': jsonPaperList['author_meta'], 'json_paper_list': Object.values(updated_json)};
+
+    render_papers(updatedJsonPaperList, report_mode, format);
+}
+
+async function loadJsonFile(url) {
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.log('Error fetching data:', error);
     }
-    else if (format == "table") {
-      populateTable(jsonPaperList, report_mode, true);
+  }
+  
+  function openImageThumbnail(figure, figureUrl) {
+      figure.onclick = function() {
+          const img_window = window.open(figureUrl, '_blank');
+          img_window.document.write(`
+              <html>
+              <head>
+              </head>
+              <body>
+              <img src=${figureUrl}></img>
+              </body>
+              </html>`
+              );
+      }
+  }
+
+
+function download_as_file(path, filename){
+    // Create a new link
+    const anchor = document.createElement('a');
+    anchor.href = path;
+    anchor.download = filename;
+
+    // Append to the DOM
+    document.body.appendChild(anchor);
+
+    // Trigger `click` event
+    anchor.click();
+
+    // Remove element from DOM
+    document.body.removeChild(anchor);
+}
+  
+  function downloadImageThumbnail(figure, figureUrl) {
+      figure.onclick = function() {
+      // this starts downloading the image
+          window.open(figureUrl, '_blank');
+      }
+  }
+  
+
+async function fetch_figure(all_paper_ids, papers_json_dict, cache_json_dict) {
+
+    figure_urls_json = {};
+    alternate_figure_url = "https://pbs.twimg.com/profile_images/1138107711923544064/qDsIE-Xl_400x400.png";
+
+    // currently, this API endpoint supports loading upto 9 figures; when a 10th ID is added, it returns 502 Bad Gateway error
+    // var endpoint = "https://qzi4sdg7tilsfj4dnt2pmrnadm0xaedr.lambda-url.us-west-2.on.aws/?id=" + paper_ids;
+
+    // slice 4 paper ids at a time and use
+    const all_paper_ids_arr = all_paper_ids.split(',');
+    for (j=0; j<all_paper_ids_arr.length; j=j+4) {
+        // get elements from array from j to j+4
+        // perform API call there
+        // for the last call, make sure that j+x to length(all_paper_ids) is only used for API call
+        const paper_ids_arr = all_paper_ids_arr.slice(j, j+4);
+        const paper_ids = paper_ids_arr.join(',');
+        // below string is for testing purpose
+        // paper_ids = "63cd10c4ca6733a8894d55cf1343636fa816cf7c,7bb907e754942b832bacf7889ba1d6bd72945ca0,8c108052266ef5d530c4adf19629e23a989c83ac,b71c245e093568d8c95aa889f968ce72b18e3d8b"
+        var endpoint = "https://qzi4sdg7tilsfj4dnt2pmrnadm0xaedr.lambda-url.us-west-2.on.aws/?id=" + paper_ids;
+        await fetch(endpoint)
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                console.log(paper_ids_arr);
+
+                // till now, if there have been errors in API response, it returns a dict, not an array
+                // the below condition handles that
+                if (data.success == false) {
+                    // for failures, open local JSON which should be paper id -> figure url and populate using those
+                    console.log("Figures not available for some paper IDs at url:"+endpoint);
+
+                    for (i=0; i< paper_ids_arr.length; i++) {
+                        figure_urls_json[paper_ids_arr[i]] = alternate_figure_url;
+                    }
+                }
+                else {
+                    data.forEach(item => {
+
+                        // Get the figure URL from the JSON response
+                        var figureUrl = item.main;
+                        var api_paper_id_arr = figureUrl.split('/');
+                        var api_paper_id = api_paper_id_arr[api_paper_id_arr.length-2];
+
+                        // I'm using the S2 figure url and parsing that as the paper id; maybe this is not fully correct
+                        // For one case, it gives me a paper id that is not in the original paper_ids sent to the API
+                        // It does not work with paper id 481c25f4bf5daa01c6f39172d211e076533b388e and instead returns aa9972d02863a5da866d18244134105fb0f83651
+                        let paper_id_exists = paper_ids_arr.includes(api_paper_id);
+                        if (paper_id_exists) {
+
+                            figure_urls_json[api_paper_id] = figureUrl;
+
+                            // openImageThumbnail(figure, figureUrl);
+                            // downloadImageThumbnail(figure, figureUrl);
+                        }
+                        else {
+                            console.log("Unknown paper id in response "+api_paper_id);
+                        }
+                    });
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching figure:", error);
+            });
     }
-    else if (format == "json") {
-      return jsonPaperList;
+    return reconcile_paper_json(figure_urls_json, papers_json_dict, cache_json_dict, alternate_figure_url)
+}
+
+function reconcile_paper_json(figure_urls_json, papers_json_dict, cache_json_dict, alternate_figure_url) {
+
+    for (let key in figure_urls_json) {
+        if (figure_urls_json[key] == alternate_figure_url) {
+        	if (Object.keys(cache_json_dict).length === 0) {
+        		papers_json_dict[key]["figure_url"] = alternate_figure_url;
+        	}
+        	else {
+        		papers_json_dict[key]["figure_url"] = cache_json_dict[key]["figure_url"];
+        	}
+        }
+        else {
+            papers_json_dict[key]["figure_url"] = figure_urls_json[key];
+        }
     }
+    return papers_json_dict;
 }
 
 function get_shortest_str(arr) {
@@ -64,13 +226,13 @@ function get_shortest_str(arr) {
     });
 }
 
-function abbreviated_venue(v, v_detailed) {
+function get_abbreviated_venue(v, v_detailed) {
     if(v_detailed == null)
         return "Preprint";
     return get_shortest_str(v_detailed.alternate_names) || v ;
 }
   
-function author_list(authors, highlighted_author) {
+function highlight_author_list(authors, highlighted_author) {
     return authors.map(x => x.name == highlighted_author? "<b>" + x.name + "</b>": x.name).join(', ');
 }
 
@@ -103,6 +265,15 @@ function parseAuthorMetadata(obj) {
     return data;
 }
 
+
+function get_paper_ids(papersjson) {
+    var paper_ids = [];
+    for (const p of papersjson["json_paper_list"]) {
+        paper_ids.push(p["paper_id"]);
+    }
+    return paper_ids;
+}
+
 function parsePaperList(obj, exclude_paper_ids) {
     const papers = obj.papers;
     const highlighted_author = obj.name;
@@ -115,11 +286,11 @@ function parsePaperList(obj, exclude_paper_ids) {
           paperData["paper_title"] = p.title;
           paperData["paper_id"] = p.paperId;
           paperData["author_list"] = raw_author_list(p.authors);
-          paperData["highlighted_author_list"] = author_list(p.authors, highlighted_author);
+          paperData["highlighted_author_list"] = highlight_author_list(p.authors, highlighted_author);
           paperData["num_citations"] = p.citationCount;
           paperData["venue"] = p.venue;
           paperData["publicationVenue"] = p.publicationVenue;
-          paperData["abbreviated_venue"] = abbreviated_venue(p.venue, p.publicationVenue);
+          paperData["abbreviated_venue"] = get_abbreviated_venue(p.venue, p.publicationVenue);
           paperData["year"] = p.year;
           paperData["bib"] = p.citationStyles.bibtex.replace("@None", "@article");
           if (p.isOpenAccess) {
@@ -229,11 +400,14 @@ function createListItem(p, report_mode, highlight) {
     author_list = p["author_list"];
     pdf_url = p["pdf_url"];
     year = p["year"];
-    abbreviated_venue = p["abbreviated_venue"];
+    the_abbreviated_venue = p["abbreviated_venue"];
 
     li = '';
     li += '<div class="s2-list__paper-shell">' // Start
-    li += '<a href="' + pdf_url + '/figure/0" class="s2-list__image-holder" target="_blank"><img src="https://picsum.photos/id/' + Math.floor(Math.random() * 640) + '/300/169" alt="First figure in '+ paper_title +'" class="s2-list__image" /></a>'; // Image, TODO: get image source, correct url, make sure alt text is correct & descriptive
+    // li += '<a href="' + pdf_url + '/figure/0" class="s2-list__image-holder" target="_blank"><img src="https://picsum.photos/id/' + Math.floor(Math.random() * 640) + '/300/169" alt="First figure in '+ paper_title +'" class="s2-list__image" /></a>'; // Image, TODO: get image source, correct url, make sure alt text is correct & descriptive
+    li += '<a href="' + pdf_url + '/figure/0" class="s2-list__image-holder" target="_blank">';
+    li += '<img src="'+ p["figure_url"] + '" alt="First figure in '+ paper_title +'" class="s2-list__image" /></a>';
+
     li += '<div class="s2-list__paper-content"><h6 class="s2-list__title"><a href="' + pdf_url + '" class="s2-list__link" target="_blank">' + paper_title +'</a></h6>'; // Title
     li += '<p class="s2-list__meta-list"><span class="s2-list__meta s2-list__meta--authors">'; // Start Meta, Start Authors
     if (highlight == true) {
@@ -243,7 +417,7 @@ function createListItem(p, report_mode, highlight) {
         li += author_list;
     }
     li += '</span>'; // End Authors
-    li += '<span class="s2-list__meta s2-list__meta--venue">' + abbreviated_venue + '</span>, <span class="s2-list__meta s2-list__meta--year">' + year + '</span>' // Venue & Year
+    li += '<span class="s2-list__meta s2-list__meta--venue">' + the_abbreviated_venue + '</span>, <span class="s2-list__meta s2-list__meta--year">' + year + '</span>' // Venue & Year
     li += '</p>'; // End Meta
     li += '<div class="s2-list__button-list">'; // Start Controls
     bib = p["bib"];
@@ -277,4 +451,21 @@ function populateList(author_data, report_mode, highlight) {
     }
 
     section.appendChild(ul);
+
+    const copied_json_btn = document.createElement('button');
+    copied_json_btn.innerHTML = "Click to copy paper json to clipboard";
+    copied_json_btn.addEventListener("click", function(){
+        // Convert JSON to string
+        const data = JSON.stringify(papers, null, 2);
+        console.log("copying paper json to clipboard ... " + data); 
+        // Create a Blob object
+        const blob = new Blob([data], { type: 'application/json' });
+        // Create an object URL
+        const url = URL.createObjectURL(blob);
+        // Download file
+        download_as_file(url, 's2_list_my_papers.json');
+        // Release the object URL
+        URL.revokeObjectURL(url);
+    });
+    section.appendChild(copied_json_btn);
 }
