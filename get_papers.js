@@ -172,6 +172,10 @@ async function fetch_figure(all_paper_ids, papers_json_dict, cache_json_dict) {
 
                         // Get the figure URL from the JSON response
                         var figureUrl = item.main;
+                        // there are cases where item.main is null, so that needs to be handled
+                        if (figureUrl == null) {
+                            return;
+                        }
                         var api_paper_id_arr = figureUrl.split('/');
                         var api_paper_id = api_paper_id_arr[api_paper_id_arr.length-2];
 
