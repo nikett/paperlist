@@ -457,7 +457,7 @@ function populateList(author_data, report_mode, highlight) {
     section.appendChild(ul);
 
     const copied_json_btn = document.createElement('button');
-    copied_json_btn.innerHTML = "Click to copy paper json to clipboard";
+    copied_json_btn.innerHTML = "Download publications json";
     copied_json_btn.addEventListener("click", function(){
         // Convert JSON to string
         const data = JSON.stringify(author_data, null, 2);
