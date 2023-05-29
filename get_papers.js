@@ -460,7 +460,7 @@ function populateList(author_data, report_mode, highlight) {
     copied_json_btn.innerHTML = "Click to copy paper json to clipboard";
     copied_json_btn.addEventListener("click", function(){
         // Convert JSON to string
-        const data = JSON.stringify(papers, null, 2);
+        const data = JSON.stringify(author_data, null, 2);
         console.log("copying paper json to clipboard ... " + data); 
         // Create a Blob object
         const blob = new Blob([data], { type: 'application/json' });
