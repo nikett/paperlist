@@ -76,7 +76,8 @@ async function populate_papers(scholar_id_str, cache_url="", format="list", excl
     for (const p of jsonPaperList["json_paper_list"]) 
         papers_dict[p["paper_id"]] = p;
     
-    updated_json = await fetch_figure(paper_ids_str, papers_dict, cache_dict);
+    var updated_json = {};
+    // updated_json = await fetch_figure(paper_ids_str, papers_dict, cache_dict);
     var updatedJsonPaperList = {'author_meta': jsonPaperList['author_meta'], 'json_paper_list': Object.values(updated_json)};
 
     render_papers(updatedJsonPaperList, report_mode, format);
@@ -207,12 +208,12 @@ function reconcile_paper_json(figure_urls_json, papers_json_dict, cache_json_dic
 
     for (let key in figure_urls_json) {
         if (figure_urls_json[key] == alternate_figure_url) {
-        	if (Object.keys(cache_json_dict).length === 0) {
-        		papers_json_dict[key]["figure_url"] = alternate_figure_url;
-        	}
-        	else {
-        		papers_json_dict[key]["figure_url"] = cache_json_dict[key]["figure_url"];
-        	}
+            if (Object.keys(cache_json_dict).length === 0) {
+                papers_json_dict[key]["figure_url"] = alternate_figure_url;
+            }
+            else {
+                papers_json_dict[key]["figure_url"] = cache_json_dict[key]["figure_url"];
+            }
         }
         else {
             papers_json_dict[key]["figure_url"] = figure_urls_json[key];
@@ -456,8 +457,18 @@ function populateList(author_data, report_mode, highlight) {
 
     section.appendChild(ul);
 
-    const copied_json_btn = document.createElement('button');
-    copied_json_btn.innerHTML = "Download publications json";
+    var copied_json_btn = null;
+
+    if (document.getElementById("download_json_btn")) {
+        copied_json_btn = document.getElementById("download_json_btn");
+    }
+    else {
+        copied_json_btn = document.createElement('button');
+        copied_json_btn.setAttribute("id", "download_json_btn");
+        copied_json_btn.innerHTML = "Download publications json";
+        console.log('shbs')
+    }
+
     copied_json_btn.addEventListener("click", function(){
         // Convert JSON to string
         const data = JSON.stringify(author_data, null, 2);
