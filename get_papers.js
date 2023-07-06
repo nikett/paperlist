@@ -44,7 +44,7 @@ function render_papers(jsonPaperList, report_mode, format, highlight=true) {
     }
 }
 
-async function populate_papers(scholar_id_str, cache_url="", format="list", exclude_paper_ids=[], report_mode=false) {
+async function populate_papers(scholar_id_str, cache_url="", update=false, format="list", exclude_paper_ids=[], report_mode=false) {
 
     // Start loading the page with cache.
     var cache_dict = {};
@@ -57,30 +57,35 @@ async function populate_papers(scholar_id_str, cache_url="", format="list", excl
         }
     }
 
-    const url = 'https://api.semanticscholar.org/graph/v1/author/';
-    const papers_fields = ['title', 'year', 'paperId', 'venue', 'citationStyles', 'citationCount', 'authors', 'externalIds', 'url', 'publicationVenue', 'isOpenAccess', 'openAccessPdf'];
-    const author_fields = ['name', 'citationCount', 'hIndex', 'paperCount'];
-    const sep = 'papers.';
-    const requestParam = "?fields=" + sep + papers_fields.join( "," + sep) + "," + author_fields.join(","); 
-    var requestURL = url + scholar_id_str + requestParam;
-    const request = new Request(requestURL);
-    const response = await fetch(request);
-    const papersText = await response.text();
-    const papersjson = JSON.parse(papersText);
-    jsonPaperList = paperListToJSON(papersjson, exclude_paper_ids);
+    if (update) {
+    	console.log('Updating in the background...')
+        const url = 'https://api.semanticscholar.org/graph/v1/author/';
+        const papers_fields = ['title', 'year', 'paperId', 'venue', 'citationStyles', 'citationCount', 'authors', 'externalIds', 'url', 'publicationVenue', 'isOpenAccess', 'openAccessPdf'];
+        const author_fields = ['name', 'citationCount', 'hIndex', 'paperCount'];
+        const sep = 'papers.';
+        const requestParam = "?fields=" + sep + papers_fields.join( "," + sep) + "," + author_fields.join(","); 
+        var requestURL = url + scholar_id_str + requestParam;
+        const request = new Request(requestURL);
+        const response = await fetch(request);
+        const papersText = await response.text();
+        const papersjson = JSON.parse(papersText);
+        jsonPaperList = paperListToJSON(papersjson, exclude_paper_ids);
 
-    paperIds = get_paper_ids(jsonPaperList);
-    paper_ids_str = String(paperIds);
+        paperIds = get_paper_ids(jsonPaperList);
+        paper_ids_str = String(paperIds);
 
-    var papers_dict = {};
-    for (const p of jsonPaperList["json_paper_list"]) 
-        papers_dict[p["paper_id"]] = p;
-    
-    var updated_json = {};
-    // updated_json = await fetch_figure(paper_ids_str, papers_dict, cache_dict);
-    var updatedJsonPaperList = {'author_meta': jsonPaperList['author_meta'], 'json_paper_list': Object.values(updated_json)};
+        var papers_dict = {};
+        for (const p of jsonPaperList["json_paper_list"]) {
+            papers_dict[p["paper_id"]] = p;
+        }
+        
+        var updated_json = {};
+        // updated_json = await fetch_figure(paper_ids_str, papers_dict, cache_dict);
+        var updatedJsonPaperList = {'author_meta': jsonPaperList['author_meta'], 'json_paper_list': Object.values(updated_json)};
 
-    render_papers(updatedJsonPaperList, report_mode, format);
+        render_papers(updatedJsonPaperList, report_mode, format);
+    }
+
 }
 
 async function loadJsonFile(url) {
@@ -466,7 +471,6 @@ function populateList(author_data, report_mode, highlight) {
         copied_json_btn = document.createElement('button');
         copied_json_btn.setAttribute("id", "download_json_btn");
         copied_json_btn.innerHTML = "Download publications json";
-        console.log('shbs')
     }
 
     copied_json_btn.addEventListener("click", function(){
